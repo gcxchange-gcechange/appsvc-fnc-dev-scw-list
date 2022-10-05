@@ -9,21 +9,15 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Microsoft.Graph;
 using System.Collections.Generic;
-using System.Net.NetworkInformation;
 using Microsoft.Extensions.Configuration;
-
-// Inside of it, you need one function call : createitem that need to use the graph api to create an item in a sharepoint list.
-// To get this working, you will need to create all resource in Azure, create a team site call App-SCW2 and a sharepoint list call: Request.
-// ALso, you will need to create an app registration with the api permission so the app can write to the sp list.
+using Microsoft.IdentityModel.Tokens;
 
 namespace appsvc_fnc_dev_scw_list_dotnet001
 {
     public static class CreateItem
     {
         [FunctionName("CreateItem")]
-        public static async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)] HttpRequest req,
-            ILogger log)
+        public static async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req, ILogger log)
         {
             log.LogInformation("CreateItem processed a request.");
 
@@ -35,38 +29,71 @@ namespace appsvc_fnc_dev_scw_list_dotnet001
            .AddEnvironmentVariables()
            .Build();
 
+            string SpaceName = data?.SpaceName;
+            string SpaceNameFR = data?.SpaceNameFR;
+            string Owner1 = data?.Owner1;
+            string SpaceDescription = data?.SpaceDescription;
+            string SpaceDescriptionFR = data?.SpaceDescriptionFR;
+            string TemplateTitle = data?.TemplateTitle;
+            string TeamPurpose = data?.TeamPurpose;
+            string BusinessJustification = data?.BusinessJustification;
+            string RequesterName = data?.RequesterName;
+            string RequesterEmail = data?.RequesterEmail;
+            string Status = data?.Status;
+
             var listItem = new ListItem
             {
                 Fields = new FieldValueSet
                 {
                     AdditionalData = new Dictionary<string, object>()
                     {
-                        {"Title", "Space Name"},
-                        {"SpaceNameFR", "Space Name FR"},
-                        {"Owner1", "Owner 1"},
-                        {"SpaceDescription", "Space Description"},
-                        {"TemplateTitle", "Template Title"},
-                        {"SpaceDescriptionFR", "Space Description FR"},
-                        {"TeamPurpose", "Team Purpose"},
-                        {"BusinessJustification", "Business Justification"},
-                        {"RequesterName", "Requester Name"},
-                        {"RequesterEmail", "Requester Email"},
-                        {"Status", "Status"}
+                        {"Title", SpaceName},
+                        {"SpaceNameFR", SpaceNameFR},
+                        {"Owner1", Owner1},
+                        {"SpaceDescription", SpaceDescription},
+                        {"SpaceDescriptionFR", SpaceDescriptionFR},
+                        {"TemplateTitle", TemplateTitle},
+                        {"TeamPurpose", TeamPurpose},
+                        {"BusinessJustification", BusinessJustification},
+                        {"RequesterName", RequesterName},
+                        {"RequesterEmail", RequesterEmail},
+                        {"Status", Status}
                     }
                 }
             };
 
-            Auth auth = new();
-            GraphServiceClient graphAPIAuth = auth.graphAuth(log);
+            string ValidationErrors = ValidateInput(listItem);
 
-            await graphAPIAuth.Sites[config["SiteId"]].Lists[config["ListId"]].Items
-            .Request()
-            .AddAsync(listItem);
+            if (ValidationErrors == "")
+            {
+                Auth auth = new();
+                GraphServiceClient graphAPIAuth = auth.graphAuth(log);
+                await graphAPIAuth.Sites[config["SiteId"]].Lists[config["ListId"]].Items.Request().AddAsync(listItem);
+                return new OkResult();
+            }
+            else
+            {
+                return new BadRequestObjectResult(ValidationErrors);
+            }
+        }
 
-            //var listColumns = graphAPIAuth.Sites[config["SiteId"]].Lists[config["ListId"]].Columns.Request().GetAsync();
-            //return new OkObjectResult(JsonConvert.SerializeObject(listColumns, Formatting.None, new JsonSerializerSettings() { PreserveReferencesHandling = PreserveReferencesHandling.Objects }).ToString());
+        /// <summary>
+        /// Ensure that all fields have a non-empty value
+        /// </summary>
+        /// <param name="listItem"></param>
+        /// <returns>String list of validation errors, otherwise empty string</returns>
+        private static string ValidateInput(ListItem listItem)
+        {
+            string ValidationErrors = String.Empty;
+            foreach (string k in listItem.Fields.AdditionalData.Keys)
+            {
+                if ((listItem.Fields.AdditionalData[k] is null) || string.IsNullOrEmpty(listItem.Fields.AdditionalData[k].ToString().Trim()))
+                {
+                    ValidationErrors += string.Format("Field {0} cannot be blank.", k) + Environment.NewLine;
+                }
+            }
 
-            return new OkObjectResult("Huzzah!");
+            return ValidationErrors;
         }
     }
 }

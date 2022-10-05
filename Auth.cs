@@ -27,25 +27,25 @@ namespace appsvc_fnc_dev_scw_list_dotnet001
             var tenantid = config["tenantid"];
             var secretName = config["secretName"];
 
-            //SecretClientOptions options = new SecretClientOptions()
-            //{
-            //    Retry =
-            //{
-            //    Delay= TimeSpan.FromSeconds(2),
-            //    MaxDelay = TimeSpan.FromSeconds(16),
-            //    MaxRetries = 5,
-            //    Mode = RetryMode.Exponential
-            // }
-            //};
-            
-            //var client = new SecretClient(new Uri(keyVaultUrl), new DefaultAzureCredential(), options);
+            SecretClientOptions options = new SecretClientOptions()
+            {
+                Retry =
+            {
+                Delay= TimeSpan.FromSeconds(2),
+                MaxDelay = TimeSpan.FromSeconds(16),
+                MaxRetries = 5,
+                Mode = RetryMode.Exponential
+             }
+            };
 
-            //KeyVaultSecret secret = client.GetSecret(secretName);
+            var client = new SecretClient(new Uri(keyVaultUrl), new DefaultAzureCredential(), options);
+            KeyVaultSecret secret = client.GetSecret(secretName);
+            string clientSecret = secret.ToString();    // config["clientSecret"] - for local testing
 
             IConfidentialClientApplication confidentialClientApplication = ConfidentialClientApplicationBuilder
             .Create(clientId)
             .WithTenantId(tenantid)
-            .WithClientSecret("j448Q~poewWoAa6X8RZaONmf0HmXH_KdaVDDDdzC")
+            .WithClientSecret(clientSecret)
             .Build();
 
             // Build the Microsoft Graph client. As the authentication provider, set an async lambda
