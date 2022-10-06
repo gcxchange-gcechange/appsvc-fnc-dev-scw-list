@@ -40,7 +40,7 @@ namespace appsvc_fnc_dev_scw_list_dotnet001
 
             var client = new SecretClient(new Uri(keyVaultUrl), new DefaultAzureCredential(), options);
             KeyVaultSecret secret = client.GetSecret(secretName);
-            string clientSecret = secret.ToString();    // config["clientSecret"] - for local testing
+            string clientSecret = secret.Value;    // config["clientSecret"] - for local testing
 
             IConfidentialClientApplication confidentialClientApplication = ConfidentialClientApplicationBuilder
             .Create(clientId)
@@ -65,6 +65,7 @@ namespace appsvc_fnc_dev_scw_list_dotnet001
                         new AuthenticationHeaderValue("Bearer", authResult.AccessToken);
                 })
                 );
+
             return graphServiceClient;
         }
     }

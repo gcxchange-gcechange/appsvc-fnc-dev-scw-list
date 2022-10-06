@@ -10,14 +10,13 @@ using Newtonsoft.Json;
 using Microsoft.Graph;
 using System.Collections.Generic;
 using Microsoft.Extensions.Configuration;
-using Microsoft.IdentityModel.Tokens;
 
 namespace appsvc_fnc_dev_scw_list_dotnet001
 {
     public static class CreateItem
     {
         [FunctionName("CreateItem")]
-        public static async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req, ILogger log)
+        public static async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] HttpRequest req, ILogger log)
         {
             log.LogInformation("CreateItem processed a request.");
 
