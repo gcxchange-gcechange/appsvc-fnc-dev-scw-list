@@ -7,6 +7,7 @@ using Microsoft.Graph;
 using Microsoft.Identity.Client;
 using System;
 using System.Net.Http.Headers;
+using System.Net.Sockets;
 
 namespace appsvc_fnc_dev_scw_list_dotnet001
 {
@@ -40,7 +41,10 @@ namespace appsvc_fnc_dev_scw_list_dotnet001
 
             var client = new SecretClient(new Uri(keyVaultUrl), new DefaultAzureCredential(), options);
             KeyVaultSecret secret = client.GetSecret(secretName);
-            string clientSecret = secret.Value;    // config["clientSecret"] - for local testing
+            string clientSecret = secret.Value;
+            //string clientSecret = config["clientSecret"]; // for local testing
+
+            log.LogInformation("clientSecret = " + clientSecret);
 
             IConfidentialClientApplication confidentialClientApplication = ConfidentialClientApplicationBuilder
             .Create(clientId)

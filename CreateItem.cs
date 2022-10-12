@@ -39,6 +39,8 @@ namespace appsvc_fnc_dev_scw_list_dotnet001
             string RequesterName = data?.RequesterName;
             string RequesterEmail = data?.RequesterEmail;
             string Status = data?.Status;
+            string ApprovedDate = data?.ApprovedDate ?? DateTime.Now.ToLocalTime().ToString();
+            string Comment = data?.Comment;
 
             var listItem = new ListItem
             {
@@ -56,43 +58,34 @@ namespace appsvc_fnc_dev_scw_list_dotnet001
                         {"BusinessJustification", BusinessJustification},
                         {"RequesterName", RequesterName},
                         {"RequesterEmail", RequesterEmail},
-                        {"Status", Status}
+                        {"Status", Status},
+                        {"ApprovedDate", ApprovedDate},
+                        {"Comment", Comment}
                     }
                 }
             };
 
-            string ValidationErrors = ValidateInput(listItem);
+            string ValidationErrors = Validation.ValidateInput(listItem.Fields);
 
             if (ValidationErrors == "")
             {
-                Auth auth = new();
-                GraphServiceClient graphAPIAuth = auth.graphAuth(log);
-                await graphAPIAuth.Sites[config["SiteId"]].Lists[config["ListId"]].Items.Request().AddAsync(listItem);
-                return new OkResult();
+                try
+                {
+                    Auth auth = new();
+                    GraphServiceClient graphAPIAuth = auth.graphAuth(log);
+                    await graphAPIAuth.Sites[config["SiteId"]].Lists[config["ListId"]].Items.Request().AddAsync(listItem);
+                    return new OkResult();
+                }
+                catch (Exception e)
+                {
+                    log.LogInformation(e.Message);
+                    return new BadRequestResult();
+                }
             }
             else
             {
                 return new BadRequestObjectResult(ValidationErrors);
             }
-        }
-
-        /// <summary>
-        /// Ensure that all fields have a non-empty value
-        /// </summary>
-        /// <param name="listItem"></param>
-        /// <returns>String list of validation errors, otherwise empty string</returns>
-        private static string ValidateInput(ListItem listItem)
-        {
-            string ValidationErrors = String.Empty;
-            foreach (string k in listItem.Fields.AdditionalData.Keys)
-            {
-                if ((listItem.Fields.AdditionalData[k] is null) || string.IsNullOrEmpty(listItem.Fields.AdditionalData[k].ToString().Trim()))
-                {
-                    ValidationErrors += string.Format("Field {0} cannot be blank.", k) + Environment.NewLine;
-                }
-            }
-
-            return ValidationErrors;
         }
     }
 }

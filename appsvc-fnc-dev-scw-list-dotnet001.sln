@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.3.32901.215
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "appsvc-fnc-dev-scw-list-dotnet001", "appsvc-fnc-dev-scw-list-dotnet001.csproj", "{64E40A23-BFDD-4656-A63F-2DD0F20F16EC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "appsvc-fnc-dev-scw-list-dotnet001", "appsvc-fnc-dev-scw-list-dotnet001.csproj", "{64E40A23-BFDD-4656-A63F-2DD0F20F16EC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
