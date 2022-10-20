@@ -39,8 +39,6 @@ namespace appsvc_fnc_dev_scw_list_dotnet001
             string RequesterName = data?.RequesterName;
             string RequesterEmail = data?.RequesterEmail;
             string Status = data?.Status;
-            string ApprovedDate = data?.ApprovedDate ?? DateTime.Now.ToLocalTime().ToString();
-            string Comment = data?.Comment;
 
             var listItem = new ListItem
             {
@@ -59,8 +57,6 @@ namespace appsvc_fnc_dev_scw_list_dotnet001
                         {"RequesterName", RequesterName},
                         {"RequesterEmail", RequesterEmail},
                         {"Status", Status},
-                        {"ApprovedDate", ApprovedDate},
-                        {"Comment", Comment}
                     }
                 }
             };
@@ -79,6 +75,8 @@ namespace appsvc_fnc_dev_scw_list_dotnet001
                 catch (Exception e)
                 {
                     log.LogInformation(e.Message);
+                    if (e.InnerException is not null)
+                        log.LogInformation(e.InnerException.Message);
                     return new BadRequestResult();
                 }
             }

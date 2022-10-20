@@ -15,17 +15,17 @@ namespace appsvc_fnc_dev_scw_list_dotnet001
     {
         public GraphServiceClient graphAuth(ILogger log)
         {
+            log.LogInformation("graphAuth processed a request.");
+
             IConfiguration config = new ConfigurationBuilder()
            .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
            .AddEnvironmentVariables()
            .Build();
 
-            log.LogInformation("graphAuth processed a request.");
-
             var scopes = new string[] { "https://graph.microsoft.com/.default" };
             var keyVaultUrl = config["keyVaultUrl"];
             var clientId = config["clientId"];
-            var tenantid = config["tenantid"];
+            var tenantid = config["tenantId"];
             var secretName = config["secretName"];
 
             SecretClientOptions options = new SecretClientOptions()
@@ -43,8 +43,6 @@ namespace appsvc_fnc_dev_scw_list_dotnet001
             KeyVaultSecret secret = client.GetSecret(secretName);
             string clientSecret = secret.Value;
             //string clientSecret = config["clientSecret"]; // for local testing
-
-            log.LogInformation("clientSecret = " + clientSecret);
 
             IConfidentialClientApplication confidentialClientApplication = ConfidentialClientApplicationBuilder
             .Create(clientId)
