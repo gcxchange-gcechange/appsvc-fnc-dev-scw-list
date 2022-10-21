@@ -74,7 +74,7 @@ namespace appsvc_fnc_dev_scw_list_dotnet001
 
                     string queueName = string.Empty;
                     if (Status == "Approved")
-                        queueName = "site-creation";
+                        queueName = "sitecreation";
                     else if (Status == "Rejected")
                         queueName = "email";
 
