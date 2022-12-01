@@ -23,10 +23,9 @@ namespace appsvc_fnc_dev_scw_list_dotnet001
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
             dynamic data = JsonConvert.DeserializeObject(requestBody);
 
-            IConfiguration config = new ConfigurationBuilder()
-           .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-           .AddEnvironmentVariables()
-           .Build();
+            IConfiguration config = new ConfigurationBuilder().AddJsonFile("appsettings.json", optional: true, reloadOnChange: true).AddEnvironmentVariables().Build();
+
+            string connectionString = config["AzureWebJobsStorage"];
 
             string SpaceName = data?.SpaceName;
             string SpaceNameFR = data?.SpaceNameFR;
@@ -70,6 +69,10 @@ namespace appsvc_fnc_dev_scw_list_dotnet001
                     Auth auth = new();
                     GraphServiceClient graphAPIAuth = auth.graphAuth(log);
                     await graphAPIAuth.Sites[config["SiteId"]].Lists[config["ListId"]].Items.Request().AddAsync(listItem);
+
+                    // send item to email queue to trigger email to user
+                    Common.InsertMessageAsync(connectionString, "email", listItem, log).GetAwaiter().GetResult();
+
                     return new OkResult();
                 }
                 catch (Exception e)

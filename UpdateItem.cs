@@ -15,22 +15,7 @@ using Microsoft.WindowsAzure.Storage;
 
 namespace appsvc_fnc_dev_scw_list_dotnet001
 {
-    public class SpaceRequest
-    {
-        public string SpaceName { get; set; }
-        public string SpaceNameFR { get; set; }
-        public string Owner1 { get; set; }
-        public string SpaceDescription { get; set; }
-        public string SpaceDescriptionFR { get; set; }
-        public string TemplateTitle { get; set; }
-        public string TeamPurpose { get; set; }
-        public string BusinessJustification { get; set; }
-        public string RequesterName { get; set; }
-        public string RequesterEmail { get; set; }
-        public string Status { get; set; }
-        public string ApprovedDate { get; set; }
-        public string Comment { get; set; }
-   }
+    
 
     public static class UpdateItem
     {
@@ -42,10 +27,9 @@ namespace appsvc_fnc_dev_scw_list_dotnet001
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
             dynamic data = JsonConvert.DeserializeObject(requestBody);
 
-            IConfiguration config = new ConfigurationBuilder()
-           .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-           .AddEnvironmentVariables()
-           .Build();
+            IConfiguration config = new ConfigurationBuilder().AddJsonFile("appsettings.json", optional: true, reloadOnChange: true).AddEnvironmentVariables().Build();
+
+            string connectionString = config["AzureWebJobsStorage"];
 
             string ItemId = data?.ItemId;
             string Status = data?.Status;
@@ -80,16 +64,9 @@ namespace appsvc_fnc_dev_scw_list_dotnet001
 
                     if (queueName != string.Empty)
                     {
-                        //send item to queue
-                        var connectionString = config["AzureWebJobsStorage"];
-                        CloudStorageAccount storageAccount = CloudStorageAccount.Parse(connectionString);
-                        CloudQueueClient queueClient = storageAccount.CreateCloudQueueClient();
-                        CloudQueue queue = queueClient.GetQueueReference(queueName);
-
+                        // send item to queue
                         ListItem listItem = await graphAPIAuth.Sites[config["SiteId"]].Lists[config["ListId"]].Items[ItemId].Request().GetAsync();
-                        InsertMessageAsync(listItem, queue, log).GetAwaiter().GetResult();
-
-                        log.LogInformation("Sent request to queue successful.");
+                        Common.InsertMessageAsync(connectionString, queueName, listItem, log).GetAwaiter().GetResult();
                     }
 
                     return new OkResult();
@@ -108,28 +85,6 @@ namespace appsvc_fnc_dev_scw_list_dotnet001
             }
         }
 
-        private static async Task InsertMessageAsync(ListItem listItem, CloudQueue theQueue, ILogger log)
-        {
-            SpaceRequest request = new SpaceRequest();
-
-            request.SpaceName = listItem.Fields.AdditionalData["Title"].ToString();
-            request.SpaceNameFR = listItem.Fields.AdditionalData["SpaceNameFR"].ToString();
-            request.Owner1 = listItem.Fields.AdditionalData["Owner1"].ToString();
-            request.SpaceDescription = listItem.Fields.AdditionalData["SpaceDescription"].ToString();
-            request.SpaceDescriptionFR = listItem.Fields.AdditionalData["SpaceDescriptionFR"].ToString();
-            request.TemplateTitle = listItem.Fields.AdditionalData["TemplateTitle"].ToString();
-            request.TeamPurpose = listItem.Fields.AdditionalData["TeamPurpose"].ToString();
-            request.BusinessJustification = listItem.Fields.AdditionalData["BusinessJustification"].ToString();
-            request.RequesterName = listItem.Fields.AdditionalData["RequesterName"].ToString();
-            request.RequesterEmail = listItem.Fields.AdditionalData["RequesterEmail"].ToString();
-            request.Status = listItem.Fields.AdditionalData["Status"].ToString();
-            request.ApprovedDate = listItem.Fields.AdditionalData["ApprovedDate"].ToString();
-            request.Comment = listItem.Fields.AdditionalData["Comment"].ToString();
-
-            string serializedMessage = JsonConvert.SerializeObject(request);
-
-            CloudQueueMessage message = new CloudQueueMessage(serializedMessage);
-            await theQueue.AddMessageAsync(message);
-        }
+       
     }
 }
