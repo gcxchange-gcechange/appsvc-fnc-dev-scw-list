@@ -1,39 +1,33 @@
 using System;
-using System.IO;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
-using Microsoft.Graph;
-using Microsoft.Extensions.Configuration;
 using System.Collections.Generic;
-using Microsoft.WindowsAzure.Storage.Queue;
-using Microsoft.WindowsAzure.Storage;
+using System.IO;
+using Microsoft.Azure.WebJobs;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Microsoft.Graph;
+using Newtonsoft.Json;
+using System.Threading.Tasks;
+using static appsvc_fnc_dev_scw_list_dotnet001.Auth;
 
 namespace appsvc_fnc_dev_scw_list_dotnet001
 {
-    
-
-    public static class UpdateItem
+    public class UpdateItem
     {
         [FunctionName("UpdateItem")]
-        public static async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)] HttpRequest req, ILogger log)
+        public async Task RunAsync([QueueTrigger("list", Connection = "AzureWebJobsStorage")] string myQueueItem, ILogger log)
         {
-            log.LogInformation("UpdateItem processed a request.");
+            log.LogInformation("_UpdateItem received a request.");
 
-            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            dynamic data = JsonConvert.DeserializeObject(requestBody);
+            dynamic data = JsonConvert.DeserializeObject(myQueueItem);
 
             IConfiguration config = new ConfigurationBuilder().AddJsonFile("appsettings.json", optional: true, reloadOnChange: true).AddEnvironmentVariables().Build();
 
             string connectionString = config["AzureWebJobsStorage"];
 
-            string ItemId = data?.ItemId;
+            string ItemId = data?.Id;
             string Status = data?.Status;
-            string ApprovedDate = data?.ApprovedDate ?? DateTime.Now.ToLocalTime().ToString();
+            string ApprovedDate = DateTime.Now.ToLocalTime().ToString();
             string Comment = data?.Comment;
 
             var fieldValueSet = new FieldValueSet
@@ -46,15 +40,16 @@ namespace appsvc_fnc_dev_scw_list_dotnet001
                     }
             };
 
-            string ValidationErrors = Validation.ValidateInput(fieldValueSet);
+            string ValidationErrors = Common.ValidateInput(fieldValueSet);
 
             if (ValidationErrors == "")
             {
-               try
+                try
                 {
-                    Auth auth = new();
-                    GraphServiceClient graphAPIAuth = auth.graphAuth(log);
-                    await graphAPIAuth.Sites[config["SiteId"]].Lists[config["ListId"]].Items[ItemId].Fields.Request().UpdateAsync(fieldValueSet);
+                    ROPCConfidentialTokenCredential auth = new ROPCConfidentialTokenCredential(log);
+                    GraphServiceClient graphAPIAuth = new GraphServiceClient(auth);
+
+                    await graphAPIAuth.Sites[config["siteId"]].Lists[config["listId"]].Items[ItemId].Fields.Request().UpdateAsync(fieldValueSet);
 
                     string queueName = string.Empty;
                     if (Status == "Approved")
@@ -62,29 +57,25 @@ namespace appsvc_fnc_dev_scw_list_dotnet001
                     else if (Status == "Rejected")
                         queueName = "email";
 
+                    log.LogInformation($"queueName: {queueName}");
+
                     if (queueName != string.Empty)
                     {
-                        // send item to queue
-                        ListItem listItem = await graphAPIAuth.Sites[config["SiteId"]].Lists[config["ListId"]].Items[ItemId].Request().GetAsync();
-                        Common.InsertMessageAsync(connectionString, queueName, listItem, log).GetAwaiter().GetResult();
+                        ListItem listItem = await graphAPIAuth.Sites[config["siteId"]].Lists[config["listId"]].Items[ItemId].Request().GetAsync();
+                        Common.InsertMessageAsync2(connectionString, queueName, listItem, log).GetAwaiter().GetResult();
                     }
-
-                    return new OkResult();
                 }
                 catch (Exception e)
                 {
-                    log.LogInformation(e.Message);
+                    log.LogError($"Message: {e.Message}");
                     if (e.InnerException is not null)
-                        log.LogInformation(e.InnerException.Message);
-                    return new BadRequestResult();
+                        log.LogError($"InnerException: {e.InnerException.Message}");
                 }
             }
             else
             {
-                return new BadRequestObjectResult(ValidationErrors);
+                throw new Exception($"ValidationErrors: {ValidationErrors}");
             }
         }
-
-       
     }
 }
