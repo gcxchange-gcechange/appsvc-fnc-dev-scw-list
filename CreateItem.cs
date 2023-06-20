@@ -40,12 +40,7 @@ namespace appsvc_fnc_dev_scw_list_dotnet001
             string RequesterName = data?.RequesterName;
             string RequesterEmail = data?.RequesterEmail;
             string Status = data?.Status;
-            string Members = data?.Members;
-
-            if (SpaceName == "ERROR")
-            {
-                return new BadRequestResult();
-            }
+            //string Members = data?.Members;
 
             var listItem = new ListItem
             {
@@ -64,8 +59,8 @@ namespace appsvc_fnc_dev_scw_list_dotnet001
                         {"BusinessJustification", BusinessJustification},
                         {"RequesterName", RequesterName},
                         {"RequesterEmail", RequesterEmail},
-                        {"Status", Status},
-                        {"Members", Members}
+                        {"Status", Status}//,
+                        //{"Members", Members}
                     }
                 }
             };
