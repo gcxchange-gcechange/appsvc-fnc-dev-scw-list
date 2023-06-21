@@ -46,7 +46,6 @@ namespace appsvc_fnc_dev_scw_list_dotnet001
             log.LogInformation("InsertMessageAsync processed a request.");
         }
 
-
         public static async Task InsertMessageAsync2(string connectionString, string queueName, ListItem listItem, ILogger log)
         {
             log.LogInformation("InsertMessageAsync received a request.");

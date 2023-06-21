@@ -77,7 +77,8 @@ namespace appsvc_fnc_dev_scw_list_dotnet001
                     await graphAPIAuth.Sites[config["siteId"]].Lists[config["listId"]].Items.Request().AddAsync(listItem);
 
                     // send item to email queue to trigger email to user
-                    Common.InsertMessageAsync(connectionString, "email", JsonConvert.SerializeObject(listItem.Fields.AdditionalData), log).GetAwaiter().GetResult();
+                    //Common.InsertMessageAsync(connectionString, "email", JsonConvert.SerializeObject(listItem.Fields.AdditionalData), log).GetAwaiter().GetResult();
+                    Common.InsertMessageAsync2(connectionString, "email", listItem, log).GetAwaiter().GetResult();
 
                     return new OkResult();
                 }
