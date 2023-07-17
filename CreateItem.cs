@@ -42,6 +42,11 @@ namespace appsvc_fnc_dev_scw_list_dotnet001
             string Status = data?.Status;
             //string Members = data?.Members;
 
+            if (TeamPurpose == "ERROR")
+            {
+                return new BadRequestResult();
+            }
+
             var listItem = new ListItem
             {
                 Fields = new FieldValueSet
