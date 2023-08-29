@@ -44,8 +44,6 @@ namespace appsvc_fnc_dev_scw_list_dotnet001
                 }
             };
 
-            //listItem.Id = ItemId;
-
             Common.InsertMessageAsync(connectionString, queueName, JsonConvert.SerializeObject(listItem.Fields.AdditionalData), log).GetAwaiter().GetResult();
 
             log.LogInformation("CreateQueue processed a request.");

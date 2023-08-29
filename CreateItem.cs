@@ -92,6 +92,8 @@ namespace appsvc_fnc_dev_scw_list_dotnet001
                     log.LogError($"Message: {e.Message}");
                     if (e.InnerException is not null)
                         log.LogError($"InnerException: {e.InnerException.Message}");
+                    log.LogError($"StackTrace: {e.StackTrace}");
+
                     return new BadRequestResult();
                 }
             }

@@ -1,7 +1,5 @@
 using System;
-using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
-using System.IO;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -17,7 +15,7 @@ namespace appsvc_fnc_dev_scw_list_dotnet001
         [FunctionName("UpdateItem")]
         public async Task RunAsync([QueueTrigger("list", Connection = "AzureWebJobsStorage")] string myQueueItem, ILogger log)
         {
-            log.LogInformation("_UpdateItem received a request.");
+            log.LogInformation("UpdateItem received a request.");
 
             dynamic data = JsonConvert.DeserializeObject(myQueueItem);
 
@@ -70,12 +68,16 @@ namespace appsvc_fnc_dev_scw_list_dotnet001
                     log.LogError($"Message: {e.Message}");
                     if (e.InnerException is not null)
                         log.LogError($"InnerException: {e.InnerException.Message}");
+                    log.LogError($"StackTrace: {e.StackTrace}");
                 }
             }
             else
             {
                 throw new Exception($"ValidationErrors: {ValidationErrors}");
             }
+
+
+            log.LogInformation("UpdateItem processed a request.");
         }
     }
 }
