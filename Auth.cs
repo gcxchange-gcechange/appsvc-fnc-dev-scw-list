@@ -1,14 +1,7 @@
 ﻿using Azure.Core;
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Net.Http;
-using System.Threading.Tasks;
-using System.Threading;
 
 namespace appsvc_fnc_dev_scw_list_dotnet001
 {
@@ -63,14 +56,14 @@ namespace appsvc_fnc_dev_scw_list_dotnet001
 
                 // Create the request body
                 var Parameters = new List<KeyValuePair<string, string>>
-            {
-                new KeyValuePair<string, string>("client_id", _clientId),
-                new KeyValuePair<string, string>("client_secret", _clientSecret),
-                new KeyValuePair<string, string>("scope", string.Join(" ", requestContext.Scopes)),
-                new KeyValuePair<string, string>("username", _username),
-                new KeyValuePair<string, string>("password", _password),
-                new KeyValuePair<string, string>("grant_type", "password")
-            };
+                {
+                    new KeyValuePair<string, string>("client_id", _clientId),
+                    new KeyValuePair<string, string>("client_secret", _clientSecret),
+                    new KeyValuePair<string, string>("scope", string.Join(" ", requestContext.Scopes)),
+                    new KeyValuePair<string, string>("username", _username),
+                    new KeyValuePair<string, string>("password", _password),
+                    new KeyValuePair<string, string>("grant_type", "password")
+                };
 
                 HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, _tokenEndpoint)
                 {
@@ -88,14 +81,14 @@ namespace appsvc_fnc_dev_scw_list_dotnet001
 
                 // Create the request body
                 var Parameters = new List<KeyValuePair<string, string>>
-            {
-                new KeyValuePair<string, string>("client_id", _clientId),
-                new KeyValuePair<string, string>("client_secret", _clientSecret),
-                new KeyValuePair<string, string>("scope", string.Join(" ", requestContext.Scopes)),
-                new KeyValuePair<string, string>("username", _username),
-                new KeyValuePair<string, string>("password", _password),
-                new KeyValuePair<string, string>("grant_type", "password")
-            };
+                {
+                    new KeyValuePair<string, string>("client_id", _clientId),
+                    new KeyValuePair<string, string>("client_secret", _clientSecret),
+                    new KeyValuePair<string, string>("scope", string.Join(" ", requestContext.Scopes)),
+                    new KeyValuePair<string, string>("username", _username),
+                    new KeyValuePair<string, string>("password", _password),
+                    new KeyValuePair<string, string>("grant_type", "password")
+                };
 
                 HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, _tokenEndpoint)
                 {

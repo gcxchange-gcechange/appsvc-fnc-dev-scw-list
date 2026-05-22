@@ -1,21 +1,23 @@
-using System;
-using System.Collections.Generic;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 using Microsoft.Graph;
+using Microsoft.Graph.Models;
 using Newtonsoft.Json;
-using System.Threading.Tasks;
 using static appsvc_fnc_dev_scw_list_dotnet001.Auth;
+using Microsoft.Azure.Functions.Worker;
 
 namespace appsvc_fnc_dev_scw_list_dotnet001
 {
     public class UpdateItem
     {
-        [FunctionName("UpdateItem")]
-        public async Task RunAsync([QueueTrigger("list", Connection = "AzureWebJobsStorage")] string myQueueItem, ILogger log)
+        private readonly ILogger<UpdateItem> _logger;
+        public UpdateItem(ILogger<UpdateItem> logger)
         {
-            log.LogInformation("UpdateItem received a request.");
+            _logger = logger;
+        }
+
+        [Function("UpdateItem")]
+        public async Task RunAsync([QueueTrigger("list", Connection = "AzureWebJobsStorage")] string myQueueItem)
+        {
+            _logger.LogInformation("UpdateItem received a request.");
 
             dynamic data = JsonConvert.DeserializeObject(myQueueItem);
 
@@ -44,10 +46,10 @@ namespace appsvc_fnc_dev_scw_list_dotnet001
             {
                 try
                 {
-                    ROPCConfidentialTokenCredential auth = new ROPCConfidentialTokenCredential(log);
+                    ROPCConfidentialTokenCredential auth = new ROPCConfidentialTokenCredential(_logger);
                     GraphServiceClient graphAPIAuth = new GraphServiceClient(auth);
 
-                    await graphAPIAuth.Sites[config["siteId"]].Lists[config["listId"]].Items[ItemId].Fields.Request().UpdateAsync(fieldValueSet);
+                    await graphAPIAuth.Sites[config["siteId"]].Lists[config["listId"]].Items[ItemId].Fields.PatchAsync(fieldValueSet);
 
                     string queueName = string.Empty;
                     if (Status == "Approved")
@@ -55,20 +57,20 @@ namespace appsvc_fnc_dev_scw_list_dotnet001
                     else if (Status == "Rejected")
                         queueName = "email";
 
-                    log.LogInformation($"queueName: {queueName}");
+                    _logger.LogInformation($"queueName: {queueName}");
 
                     if (queueName != string.Empty)
                     {
-                        ListItem listItem = await graphAPIAuth.Sites[config["siteId"]].Lists[config["listId"]].Items[ItemId].Request().GetAsync();
-                        Common.InsertMessageAsync2(connectionString, queueName, listItem, log).GetAwaiter().GetResult();
+                        ListItem listItem = await graphAPIAuth.Sites[config["siteId"]].Lists[config["listId"]].Items[ItemId].GetAsync();
+                        Common.InsertMessageAsync2(connectionString, queueName, listItem, _logger).GetAwaiter().GetResult();
                     }
                 }
                 catch (Exception e)
                 {
-                    log.LogError($"Message: {e.Message}");
+                    _logger.LogError($"Message: {e.Message}");
                     if (e.InnerException is not null)
-                        log.LogError($"InnerException: {e.InnerException.Message}");
-                    log.LogError($"StackTrace: {e.StackTrace}");
+                        _logger.LogError($"InnerException: {e.InnerException.Message}");
+                    _logger.LogError($"StackTrace: {e.StackTrace}");
                 }
             }
             else
@@ -77,7 +79,7 @@ namespace appsvc_fnc_dev_scw_list_dotnet001
             }
 
 
-            log.LogInformation("UpdateItem processed a request.");
+            _logger.LogInformation("UpdateItem processed a request.");
         }
     }
 }

@@ -1,25 +1,25 @@
-using System;
-using System.IO;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.Functions.Worker;
 using Microsoft.Graph;
-using System.Collections.Generic;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Graph.Models;
+using Newtonsoft.Json;
 using static appsvc_fnc_dev_scw_list_dotnet001.Auth;
 
 namespace appsvc_fnc_dev_scw_list_dotnet001
 {
-    public static class CreateItem
+    public class CreateItem
     {
-        [FunctionName("CreateItem")]
-        public static async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] HttpRequest req, ILogger log)
+        private readonly ILogger<CreateItem> _logger;
+        public CreateItem(ILogger<CreateItem> logger)
         {
-            log.LogInformation("CreateItem processed a request.");
+            _logger = logger;
+        }
+
+        [Function("CreateItem")]
+        public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] HttpRequest req)
+        {
+            _logger.LogInformation("CreateItem processed a request.");
 
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
             dynamic data = JsonConvert.DeserializeObject(requestBody);
@@ -76,23 +76,22 @@ namespace appsvc_fnc_dev_scw_list_dotnet001
             {
                 try
                 {
-                    ROPCConfidentialTokenCredential auth = new ROPCConfidentialTokenCredential(log);
+                    ROPCConfidentialTokenCredential auth = new ROPCConfidentialTokenCredential(_logger);
                     GraphServiceClient graphAPIAuth = new GraphServiceClient(auth);
 
-                    await graphAPIAuth.Sites[config["siteId"]].Lists[config["listId"]].Items.Request().AddAsync(listItem);
+                    await graphAPIAuth.Sites[config["siteId"]].Lists[config["listId"]].Items.PostAsync(listItem);
 
                     // send item to email queue to trigger email to user
-                    //Common.InsertMessageAsync(connectionString, "email", JsonConvert.SerializeObject(listItem.Fields.AdditionalData), log).GetAwaiter().GetResult();
-                    Common.InsertMessageAsync2(connectionString, "email", listItem, log).GetAwaiter().GetResult();
+                    Common.InsertMessageAsync2(connectionString, "email", listItem, _logger).GetAwaiter().GetResult();
 
                     return new OkResult();
                 }
                 catch (Exception e)
                 {
-                    log.LogError($"Message: {e.Message}");
+                    _logger.LogError($"Message: {e.Message}");
                     if (e.InnerException is not null)
-                        log.LogError($"InnerException: {e.InnerException.Message}");
-                    log.LogError($"StackTrace: {e.StackTrace}");
+                        _logger.LogError($"InnerException: {e.InnerException.Message}");
+                    _logger.LogError($"StackTrace: {e.StackTrace}");
 
                     return new BadRequestResult();
                 }

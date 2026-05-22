@@ -1,25 +1,23 @@
-using System.IO;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
-using Microsoft.Graph;
-
+using Microsoft.Graph.Models;
 using Newtonsoft.Json;
-using Microsoft.Extensions.Configuration;
-using System;
-using System.Collections.Generic;
+using Microsoft.Azure.Functions.Worker;
 
 namespace appsvc_fnc_dev_scw_list_dotnet001
 {
-    public static class CreateQueue
+    public class CreateQueue
     {
-        [FunctionName("CreateQueue")]
-        public static async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)] HttpRequest req, ILogger log)
+        private readonly ILogger<CreateQueue> _logger;
+        public CreateQueue(ILogger<CreateQueue> logger)
         {
-            log.LogInformation("CreateQueue received a request.");
+            _logger = logger;
+        }
+
+        [Function("CreateQueue")]
+        public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)] HttpRequest req)
+        {
+            _logger.LogInformation("CreateQueue received a request.");
 
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
             dynamic data = JsonConvert.DeserializeObject(requestBody);
@@ -44,9 +42,9 @@ namespace appsvc_fnc_dev_scw_list_dotnet001
                 }
             };
 
-            Common.InsertMessageAsync(connectionString, queueName, JsonConvert.SerializeObject(listItem.Fields.AdditionalData), log).GetAwaiter().GetResult();
+            Common.InsertMessageAsync(connectionString, queueName, JsonConvert.SerializeObject(listItem.Fields.AdditionalData), _logger).GetAwaiter().GetResult();
 
-            log.LogInformation("CreateQueue processed a request.");
+            _logger.LogInformation("CreateQueue processed a request.");
             return new OkResult();
         }
     }
