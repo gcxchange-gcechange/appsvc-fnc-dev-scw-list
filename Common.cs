@@ -1,16 +1,11 @@
-﻿using Microsoft.Extensions.Logging;
-using Microsoft.Graph;
+﻿using Azure.Storage.Queues;
+using Microsoft.Graph.Models;
 using Newtonsoft.Json;
-using System.Threading.Tasks;
-using Microsoft.WindowsAzure.Storage;
-using Microsoft.WindowsAzure.Storage.Queue;
-using System;
 
 namespace appsvc_fnc_dev_scw_list_dotnet001
 {
     internal class Common
     {
-
         public class SpaceRequest
         {
             public string Id { get; set; }
@@ -35,26 +30,16 @@ namespace appsvc_fnc_dev_scw_list_dotnet001
         {
             log.LogInformation("InsertMessageAsync received a request.");
 
-            log.LogInformation($"serializedMessage: {serializedMessage}");
-
-            CloudStorageAccount storageAccount = CloudStorageAccount.Parse(connectionString);
-            CloudQueueClient queueClient = storageAccount.CreateCloudQueueClient();
-            CloudQueue queue = queueClient.GetQueueReference(queueName);
-            CloudQueueMessage message = new CloudQueueMessage(serializedMessage);
-            await queue.AddMessageAsync(message);
+            QueueClientOptions options = new QueueClientOptions() { MessageEncoding = QueueMessageEncoding.Base64 };
+            QueueClient client = new QueueClient(connectionString, queueName, options);
+            await client.SendMessageAsync(serializedMessage);
 
             log.LogInformation("InsertMessageAsync processed a request.");
         }
 
         public static async Task InsertMessageAsync2(string connectionString, string queueName, ListItem listItem, ILogger log)
         {
-            log.LogInformation("InsertMessageAsync received a request.");
-
-            // temp, to be refactored
-
-            CloudStorageAccount storageAccount = CloudStorageAccount.Parse(connectionString);
-            CloudQueueClient queueClient = storageAccount.CreateCloudQueueClient();
-            CloudQueue queue = queueClient.GetQueueReference(queueName);
+            log.LogInformation("InsertMessageAsync2 received a request.");
 
             SpaceRequest request = new SpaceRequest();
 
@@ -76,11 +61,11 @@ namespace appsvc_fnc_dev_scw_list_dotnet001
             //request.Members = listItem.Fields.AdditionalData.Keys.Contains("Members") ? listItem.Fields.AdditionalData["Members"].ToString() : string.Empty;
             
             string serializedMessage = JsonConvert.SerializeObject(request);
+            QueueClientOptions options = new QueueClientOptions() { MessageEncoding = QueueMessageEncoding.Base64 };
+            QueueClient client = new QueueClient(connectionString, queueName, options);
+            await client.SendMessageAsync(serializedMessage);
 
-            CloudQueueMessage message = new CloudQueueMessage(serializedMessage);
-            await queue.AddMessageAsync(message);
-
-            log.LogInformation("InsertMessageAsync processed a request.");
+            log.LogInformation("InsertMessageAsync2 processed a request.");
         }
 
 

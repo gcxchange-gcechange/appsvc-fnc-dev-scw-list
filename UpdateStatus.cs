@@ -1,21 +1,23 @@
-using System;
-using System.Collections.Generic;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 using Microsoft.Graph;
+using Microsoft.Graph.Models;
 using Newtonsoft.Json;
-using System.Threading.Tasks;
 using static appsvc_fnc_dev_scw_list_dotnet001.Auth;
+using Microsoft.Azure.Functions.Worker;
 
 namespace appsvc_fnc_dev_scw_list_dotnet001
 {
     public class UpdateStatus
     {
-        [FunctionName("UpdateStatus")]
-        public async Task RunAsync([QueueTrigger("status", Connection = "AzureWebJobsStorage")]string myQueueItem, ILogger log)
+        private readonly ILogger<UpdateStatus> _logger;
+        public UpdateStatus(ILogger<UpdateStatus> logger)
         {
-            log.LogInformation("UpdateStatus received a request.");
+            _logger = logger;
+        }
+
+        [Function("UpdateStatus")]
+        public async Task RunAsync([QueueTrigger("status", Connection = "AzureWebJobsStorage")]string myQueueItem)
+        {
+            _logger.LogInformation("UpdateStatus received a request.");
 
             IConfiguration config = new ConfigurationBuilder().AddJsonFile("appsettings.json", optional: true, reloadOnChange: true).AddEnvironmentVariables().Build();
 
@@ -37,20 +39,20 @@ namespace appsvc_fnc_dev_scw_list_dotnet001
 
             try
             {
-                ROPCConfidentialTokenCredential auth = new ROPCConfidentialTokenCredential(log);
+                ROPCConfidentialTokenCredential auth = new ROPCConfidentialTokenCredential(_logger);
                 GraphServiceClient graphAPIAuth = new GraphServiceClient(auth);
 
-                await graphAPIAuth.Sites[siteId].Lists[listId].Items[ItemId].Fields.Request().UpdateAsync(fieldValueSet);
+                await graphAPIAuth.Sites[siteId].Lists[listId].Items[ItemId].Fields.PatchAsync(fieldValueSet);
             }
             catch (Exception e)
             {
-                log.LogError($"Message: {e.Message}");
+                _logger.LogError($"Message: {e.Message}");
                 if (e.InnerException is not null)
-                    log.LogError($"InnerException: {e.InnerException.Message}");
-                log.LogError($"StackTrace: {e.StackTrace}");
+                    _logger.LogError($"InnerException: {e.InnerException.Message}");
+                _logger.LogError($"StackTrace: {e.StackTrace}");
             }
 
-            log.LogInformation("UpdateStatus processed a request.");
+            _logger.LogInformation("UpdateStatus processed a request.");
         }
     }
 }
